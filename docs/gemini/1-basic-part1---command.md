@@ -7,7 +7,7 @@
 <br/>
 
 ## /init
-![alt text](<./img/1-basic-command-part1/init-command.png>)
+![alt text](<./img/1-basic-part1---command/init-command.png>)
 
 이렇게 `/init` 명령을 수행하고 나면 현재 디렉터리 내애 GEMINI.md 라는 파일이 생성된다.<br/>
 <br/>
