@@ -107,3 +107,255 @@ gemini ask --system "$(cat ./GEMINI.md || cat ~/project/GEMINI.md)"
 
 혹시 특정 폴더마다 다른 규칙을 적용해야 하는 특별한 프로젝트 구조를 가지고 계신가요?
 
+## Q3. Gemini CLI 세션 열때마다 GEMINI.md 파일의 자동 로드 여부
+Gemini.md 파일에 기술한 프로젝트 명세 및 프로젝트 지식 창고를 정의한 내용들은 프로젝트 내에서 gemini CLI 세션을 열때마다 로드되나요?
+
+### A
+**Gemini CLI**의 동작 방식은 사용자가 어떤 툴(커스텀 라이브러리, 공식 SDK 래퍼 등)을 사용하느냐에 따라 차이가 있지만, 일반적으로 **세션을 새로 열 때마다 자동으로 파일을 로드하는 "자동 감지" 기능은 내장되어 있지 않습니다.**
+
+Claude Code가 `agent.md`를 자동으로 찾아 읽는 것과는 대조적인 부분입니다. 이해를 돕기 위해 상세한 동작 메커니즘을 정리해 드립니다.
+
+---
+
+#### 1. 자동 로드 여부: "No" (기본 설정 시)
+구글에서 제공하는 기본 Gemini API 환경이나 표준 CLI 도구들은 실행될 때 주변 파일을 자동으로 스캔하여 컨텍스트에 포함하지 않습니다.
+
+* **Stateless 방식:** 대부분의 CLI는 실행 시점에 입력된 텍스트와 옵션값만 모델에 전달합니다.
+* **로드 방법:** `GEMINI.md`에 정의된 내용을 모델이 알게 하려면, 실행 명령어나 설정 파일(config)에서 **해당 파일의 경로를 명시적으로 지정**해 주어야 합니다.
+
+---
+
+#### 2. 세션별 로드 방식 비교
+사용 중인 환경에 따라 로드 방식은 다음과 같이 나뉩니다.
+
+##### A. 일반적인 CLI 환경 (매번 수동 주입)
+세션을 열 때마다 쉘 명령어의 인자로 파일 내용을 넘겨야 합니다.
+```bash
+# GEMINI.md의 내용을 시스템 프롬프트로 전달하여 실행
+gemini chat --system "$(cat GEMINI.md)"
+```
+이 경우, 세션이 유지되는 동안은 지침이 유효하지만, CLI를 종료했다가 다시 실행하면 위 명령어를 다시 입력해야 합니다.
+
+##### B. 커스텀 래퍼 또는 IDE 플러그인 (자동 로드 가능)
+만약 `gemini-cli` 같은 오픈소스 도구나 VS Code 확장 프로그램을 사용 중이라면, 설정(Config) 파일에 `GEMINI.md`를 기본 컨텍스트로 등록할 수 있습니다.
+* **동작:** 툴이 실행될 때마다 설정된 경로의 파일을 읽어 모델에게 "너는 이런 프로젝트 가이드를 준수해야 해"라고 먼저 말해주는 방식입니다.
+
+---
+
+#### 3. 효율적인 관리 팁
+`GEMINI.md`의 내용이 방대할 경우 세션마다 로드하면 **토큰 소모**가 커질 수 있습니다. 이를 효율적으로 관리하는 방법입니다.
+
+1.  **System Instruction 활용:** 프로젝트의 핵심 규칙(예: "항상 TypeScript 사용", "함수는 20줄 이내")은 시스템 지침으로 고정하세요.
+2.  **Context Caching (고급 기능):** 프로젝트 명세가 아주 길고 자주 사용된다면, Gemini API의 **Context Caching** 기능을 지원하는 툴을 사용해 비용과 속도를 최적화할 수 있습니다. (한 번 로드된 컨텍스트를 일정 시간 동안 메모리에 유지)
+
+---
+
+#### 요약
+Claude Code처럼 파일을 두기만 하면 알아서 읽어가는 방식은 Gemini CLI의 기본 사양이 아닙니다. 따라서 **"세션을 열 때 해당 파일의 내용을 시스템 프롬프트나 컨텍스트 인자로 넣어주는 절차"**가 반드시 포함되어야 Gemini가 프로젝트 지식을 인지한 상태로 대화를 시작할 수 있습니다.
+
+혹시 특정 오픈소스 Gemini CLI 도구를 사용 중이신가요? 도구 이름을 알려주시면 해당 도구에서 자동 로드를 설정하는 법을 확인해 드릴 수 있습니다.
+
+## Q4. 사용자가 Gemini CLI 를 열어서 세션을 시작할 때 GEMINI.md 파일을 불러오는 커스텀 스킬 로드 가능여부
+프로젝트 내에서 Gemini CLI 세션을 열었을때 Gemini.md 파일을 불러오는 커스텀 스킬을 추가하는 것은 가능한가요? (사용자가 Gemini CLI 를 연 후 스킬을 실행하는 방식으로)<br>
+
+> (my idea) Claude Code 와 완전 유사한 기능은 아니고 Function Calling(Tool Use) 이라는 기능을 이용하는데, 이게 막상 직접 읽어보니 Claude Code 에 비해 더 구체적이고 명확한 실행이 가능하게 하는 것 같다고 느꼈다. Claude Code 의 경우 의도하지 않은 경우에 Skill 이 발동될수 있다는 것을 생각했을때 Function Calling(Tool Use) 이 꽤 괜찮은 도구라고 느꼈다.
+
+> (my idea) Claude Code 의 커스텀 skill 처럼 자동으로 발동되지는 않는다. 다만 사용자가 Gemini CLI  쉘스크립트 또는 Function Calling(Tool Use) 을 사용해서 명시적으로 호출하면 될 것 같다. 컨텍스트 소모를 줄이는 방식을 제공하기 위해 이렇게 설계됐나보다 싶다.
+
+### A
+
+네, 충분히 가능합니다! Gemini CLI 환경에서 특정 파일을 읽어 현재 대화 맥락(Context)에 주입하는 행위를 하나의 **'커스텀 스킬'** 혹은 **'명령어'**처럼 구현할 수 있습니다.
+
+사용하시는 도구의 인터페이스에 따라 크게 두 가지 방식으로 구현이 가능합니다.
+
+---
+
+#### 1. 전용 CLI 도구를 통한 커스텀 명령어 등록
+만약 확장성이 있는 오픈소스 Gemini CLI(예: `gemini-chat-cli` 등)를 사용 중이라면, 설정 파일(`config.yaml` 또는 `.json`)에 커스텀 함수나 별칭을 등록할 수 있습니다.
+
+* **동작 방식:** 사용자가 세션 안에서 `/load-docs` 같은 명령어를 입력하면, CLI가 로컬의 `Gemini.md` 파일을 읽어 모델에게 "이 내용을 기억해"라고 전달합니다.
+* **장점:** 대화 도중에 필요할 때만 지식을 로드하여 **토큰(비용)을 절약**할 수 있습니다.
+
+---
+
+#### 2. 쉘 스크립트 기반의 '스킬' 구현 (가장 확실한 방법)
+공식 SDK나 간단한 CLI를 사용 중이라면, 별도의 스크립트를 만들어 '프로젝트 지식 로드' 기능을 수행하게 할 수 있습니다.
+
+##### 구현 예시 (Python/Node.js 등)
+다음은 개념적인 워크플로우입니다:
+
+1.  **스킬 정의:** `load_project_context`라는 함수를 만듭니다.
+2.  **파일 읽기:** 이 함수는 실행 시 현재 디렉토리의 `Gemini.md`를 검색합니다.
+3.  **프롬프트 주입:** 읽어온 텍스트 앞에 `"아래는 이 프로젝트의 명세서입니다. 이를 바탕으로 답변하세요:"`라는 문구를 붙여 모델에게 보냅니다.
+
+```bash
+# 사용 예시 (가상 명령어)
+> gemini-cli
+> (세션 시작)
+> /skill load_gemini_md  # 사용자가 정의한 커스텀 스킬 실행
+> "준비되었습니다. Gemini.md의 내용을 파악했습니다."
+```
+
+---
+
+#### 3. Gemini "Tool Use" (함수 호출) 기능 활용
+Gemini의 강력한 기능인 **Function Calling (Tool Use)**을 이용하면 더 스마트하게 구현할 수 있습니다.
+
+* **설정:** Gemini에게 `read_file(filename)`이라는 함수를 도구로 제공합니다.
+* **실행:** 사용자가 "프로젝트 명세 알려줘"라고 하면, Gemini가 스스로 **'아, 내가 Gemini.md를 읽어야겠구나'**라고 판단하여 함수를 실행하고 내용을 가져옵니다.
+* **특징:** 사용자가 일일이 "스킬 실행해"라고 말하지 않아도 문맥에 따라 AI가 알아서 지식 창고에 접근합니다.
+
+---
+
+#### 4. 추천하는 구현 전략
+
+지식 창고의 용도에 따라 아래 전략 중 하나를 선택해 보세요.
+
+| 전략 | 방식 | 추천 상황 |
+| :--- | :--- | :--- |
+| **초기 로드** | 세션 시작 시 `cat Gemini.md`로 주입 | 프로젝트 전체 맥락이 항상 필요한 경우 |
+| **수동 스킬** | `/load` 명령어 등으로 필요할 때 호출 | 토큰 소모를 줄이고 싶을 때 |
+| **자동 호출** | Function Calling (Tool Use) 연동 | AI가 필요할 때 스스로 문서를 찾아보길 원할 때 |
+
+---
+
+#### 실질적인 적용 팁
+현재 사용 중인 Gemini CLI가 **Node.js 기반**인지, 혹은 **Python SDK**를 직접 호출하는 방식인지 알려주시면, 해당 환경에서 바로 복사해서 쓰실 수 있는 **커스텀 스킬 구현 코드 예시**를 짜드릴 수 있습니다. 
+
+어떤 방식으로 CLI를 실행하고 계신가요? (예: `npx`, `pip install`로 설치한 도구 등)
+
+<br/>
+
+## Q5. e.g. ppt 제작하는 Function Calling(Tool Use) (Gemini 버전 Custom Skill)
+> (my idea) gemini 에는 custom skill 이라는게 없고 custom skill 과 유사한 기능으로 Function Calling 이 있다. 다만 사용자가 명시적으로 호출해야 한다.
+
+Gemini CLI 환경에서 사용할 만한 간단한 Function Calling(Tool Use) 기능의 예제를 만들려고 합니다. 
+
+사용자의 요청 세부사항이 담긴 markdown 파일명을 인자로 받아 Gemini 가 사용자의 요구사항에 맞도록 PPT 파일을 만드는 Function Calling (Tool Use) 기능의 예제와 설정 과정을 보여주세요. 프로젝트 디렉터리 레벨의 예제와 전역 레벨의 예제를 각각 보여주세요. markdown 파일을 PPT 로 변환하는 것이 아니라 markdown 파일의 요구사항(디자인,색상,톤, 테마, 주제, 사용자가 제공한 초안 등이 명시된 지침이 담긴 markdown) 을 Gemini 가 판단해서 PPT 를 작성하도록 하세요. 
+
+지침
+- 프로젝트 레벨의 예제의 경우 설정 파일 등을 어디에 두는지도 제시하고, 필수적인 것인지 또는 사용자가 직접 원하는 디렉터리를 지정할 수 있는지도 설명하세요.
+- 전역 레벨의 예제의 경우 설정 파일 등을 어디에 두는지도 제시하고, 필수적인 것인지 또는 사용자가 직접 원하는 디렉터리를 지정할 수 있는지도 설명하세요.
+- 프로젝트 레벨, 전역 레벨 모두 사용자가 해당 Function Calling (Tool Use)를 사용하는 예를 보이세요.
+- markdown 파일(디자인,색상,톤, 테마, 주제, 사용자가 제공한 초안 등이 명시된 지침이 담긴 markdown)의 예제도 제시하세요.
+
+### A
+Gemini CLI에서 마크다운 지침을 해석해 PPT를 생성하는 **Function Calling** 구현은 AI가 단순한 코딩 조우자를 넘어 '대리인(Agent)'으로 동작하게 만드는 훌륭한 예시입니다.
+
+---
+
+#### 1. 지침 마크다운 예시 (`ppt_brief.md`)
+AI가 읽고 디자인과 내용을 결정할 가이드라인 파일입니다.
+
+```markdown
+# 프로젝트 발표 자료 요청서
+- **주제**: 2026년 친환경 에너지 트렌드 분석
+- **톤앤매너**: 신뢰감 있는, 현대적인, 미니멀리즘
+- **메인 컬러**: 딥 네이비 (#001f3f) 및 포인트 그린
+- **슬라이드 구성**:
+  1. 타이틀: 미래를 여는 에너지
+  2. 현황: 글로벌 탄소 중립 정책 요약
+  3. 결론: 향후 5년 내 핵심 기술 3가지
+- **참고**: 데이터 시각화는 깔끔한 막대 그래프 형태를 선호함.
+```
+
+---
+
+#### 2. PPT 생성 핵심 로직 (`create_ppt.py`)
+이 파일은 Gemini가 도구 호출을 결정했을 때 실제 쉘에서 실행될 스크립트입니다.
+
+```python
+# 위치: 프로젝트 루트 또는 전역 스크립트 경로
+import sys
+import json
+from pptx import Presentation # pip install python-pptx
+
+def create_presentation(instruction_json):
+    data = json.loads(instruction_json)
+    prs = Presentation()
+    
+    # Gemini가 해석해서 보내준 내용으로 슬라이드 생성
+    for slide_data in data['slides']:
+        slide_layout = prs.slide_layouts[1]
+        slide = prs.slides.add_slide(slide_layout)
+        slide.shapes.title.text = slide_data['title']
+        slide.placeholders[1].text = slide_data['content']
+    
+    output_path = data.get('output_path', 'output.pptx')
+    prs.save(output_path)
+    print(f"SUCCESS: {output_path}")
+
+if __name__ == "__main__":
+    # Gemini로부터 전달받은 JSON 문자열 인자 처리
+    create_presentation(sys.argv[1])
+```
+
+---
+
+#### 3. 프로젝트 레벨 (Project Level) 설정
+
+프로젝트별로 다른 생성 도구나 템플릿을 사용할 때 유용합니다.
+
+##### 설정 파일 위치
+* **경로**: `./.gemini/tools.json` (또는 프로젝트 루트)
+* **필수 여부**: 특정 프로젝트 전용 도구라면 필수입니다. 대부분의 CLI 툴은 현재 디렉토리의 설정 파일을 우선 로드합니다.
+* **지정 가능 여부**: 실행 시 `-c` 또는 `--config` 옵션으로 사용자가 원하는 경로의 설정 파일을 강제로 지정할 수 있습니다.
+
+##### `tools.json` 예시
+```json
+{
+  "tools": [{
+    "name": "generate_ppt_from_brief",
+    "description": "마크다운 파일의 디자인 지침을 해석하여 PPT를 생성합니다.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "brief_file": { "type": "string", "description": "지침이 담긴 md 파일명" },
+        "output_path": { "type": "string", "description": "저장할 PPT 경로 (선택)" }
+      },
+      "required": ["brief_file"]
+    },
+    "implementation": "python3 create_ppt.py '{\"slides\": [...], \"output_path\": \"$output_path\"}'"
+  }]
+}
+```
+
+---
+
+#### 4. 전역 레벨 (Global Level) 설정
+
+어떤 폴더에서든 PPT 생성 기능을 호출하고 싶을 때 사용합니다.
+
+##### 설정 파일 위치
+* **경로**: `~/.config/gemini/config.json` (Linux/macOS) 또는 `%APPDATA%\gemini\config.json` (Windows)
+* **필수 여부**: 전역 환경 변수에 등록되어 있다면 필수 파일은 아니나, 관리를 위해 권장됩니다.
+* **지정 가능 여부**: 환경 변수 `GEMINI_GLOBAL_CONFIG` 등을 통해 커스텀 경로를 지정할 수 있습니다.
+
+---
+
+#### 5. 사용 예시 (Interaction)
+
+##### Case A: 명시적 호출 (Specific Call)
+사용자가 어떤 기능을 쓸지 직접 지정합니다.
+> **사용자**: `/call generate_ppt_from_brief brief_file="ppt_brief.md" output_path="final_report.pptx"`
+> **Gemini**: "알겠습니다. ppt_brief.md를 읽고 final_report.pptx 파일 생성을 완료했습니다."
+
+##### Case B: 자연어 요청 (Natural Language) - **Trigger Point**
+Gemini가 도구의 `description`을 보고 스스로 판단하여 실행합니다.
+> **사용자**: "여기 있는 `ppt_brief.md` 내용대로 멋진 발표 자료 하나 만들어줄래?"
+> **Trigger Point**: Gemini는 "발표 자료", "만들어줘", ".md 내용대로"라는 키워드와 시스템에 등록된 `generate_ppt_from_brief` 도구의 설명을 대조하여 **함수 호출(Function Call)**을 트리거합니다.
+
+
+
+##### Case C: 출력 경로 생략 시
+> **사용자**: "이 마크다운 파일로 PPT 만들어줘."
+> **Gemini**: (내부적으로 도구 실행 후 응답) "지침을 분석하여 미니멀한 테마의 PPT를 생성했습니다. 파일은 기본 설정에 따라 `output.pptx`로 저장되었습니다."
+
+---
+
+#### 💡 핵심 요약
+1.  **동작 원리**: 사용자가 자연어로 요청하면 Gemini는 `tools.json`에 정의된 `description`을 보고 도구 실행이 필요한지 판단합니다.
+2.  **프로젝트 레벨**: 해당 폴더의 특수한 디자인 룰이 담긴 `create_ppt.py`를 실행할 때 유리합니다.
+3.  **전역 레벨**: 범용적인 PPT 생성 도구를 어디서든 꺼내 쓸 때 유리합니다.
+4.  **연결 고리**: Gemini는 마크다운을 **읽기만 하는 게 아니라 해석**하여 `create_ppt.py`가 이해할 수 있는 **구조화된 JSON 데이터**로 변환하여 인자로 넘겨주는 중개자 역할을 수행합니다.
+
