@@ -1,5 +1,7 @@
 # Agent Skills (에이전트 스킬)
-![Gemini Banner](https://geminicli.com/_astro/icon.Bo4M5sF3.png)
+<img src="https://geminicli.com/_astro/icon.Bo4M5sF3.png" width="10%" alt="Gemini Banner" />
+
+<br/>
 
 **Agent Skills**는 Gemini CLI의 기능을 특정 전문 지식, 절차적 워크플로우 및 작업 전용 리소스로 확장할 수 있게 해주는 기능입니다. 이 기능은 [Agent Skills](https://agentskills.io) 오픈 표준을 기반으로 하며, 독립된 폴더 내의 지침(SOP)과 자산(Assets)을 하나의 실행 가능한 '기술(Capability)'로 패키징하여 사용합니다.
 
