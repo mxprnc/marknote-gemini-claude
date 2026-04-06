@@ -1,5 +1,5 @@
 # Gemini Sub-Agents
-![Gemini Banner](https://www.gstatic.com/lamda/images/gemini_wordmark_67f677fb2.svg)
+![Gemini Banner](https://geminicli.com/_astro/icon.Bo4M5sF3.png)
 
 Gemini CLI의 **Sub-Agent(서브 에이전트)**는 메인 세션 내에서 특정 전문 작업을 수행하도록 설계된 독립적인 AI 인스턴스입니다. 복잡한 코드 분석, 브라우징, 도움말 검색 등을 수행하며 메인 에이전트와 분리된 컨텍스트에서 작동하여 효율성을 극대화합니다.
 
