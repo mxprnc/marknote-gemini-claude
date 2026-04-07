@@ -1,5 +1,5 @@
 # 예제 1: gemini cli skill 'teb'
-
+최종결과물
 - https://github.com/alpha3002025/teb
 
 만들려는 것: gemini cli skill
