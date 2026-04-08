@@ -26,9 +26,9 @@ mcp
 * MCP 서버는 **Model Context Protocol**을 통해 Gemini CLI에 도구와 리소스를 노출하는 애플리케이션입니다. 
 * 이를 통해 Gemini 모델은 로컬 환경이나 외부 API 서비스와 상호작용할 수 있는 브릿지 역할을 수행합니다.
 * 문서
-  * [mcp](./06-mcp---gemini-official-docs.md)
-  * [mcp setup](./06-mcp-setup---gemini-official-docs.md)
-  * [mcp advanced config](./06-mcp-advanced-config---gemini-official-docs.md)
+  * [mcp](./03-mcp---gemini-mcp-official-docs.md)
+  * [mcp setup](./03-mcp---gemini-mcp-setup-official-docs.md)
+  * [mcp advanced config](./03-mcp---gemini-mcp-advanced-config-official-docs.md)
 
 <br/>
 
