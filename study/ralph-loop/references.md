@@ -7,6 +7,8 @@
 * **GitHub:** [ghuntley/how-to-ralph-wiggum](https://github.com/ghuntley/how-to-ralph-wiggum)
 * **특징:** Ralph Loop의 핵심 철학인 "Bash loop를 이용한 무한 반복 및 외부 검증(External Verification)"에 대한 상세한 가이드와 예시가 포함되어 있습니다.
 
+<br/>
+
 ---
 
 ### 2. 주요 오픈소스 구현체 (CLI 및 SDK)
@@ -22,6 +24,7 @@ Ralph Loop 기법을 사용하기 쉽게 도구화한 프로젝트들입니다. 
     * **GitHub:** [gemini-cli-extensions/ralph](https://github.com/gemini-cli-extensions/ralph)
     * `gemini extensions install https://github.com/gemini-cli-extensions/ralph` 명령어로 설치 가능합니다.
 
+<br/>
 
 ---
 
@@ -31,4 +34,4 @@ Ralph Loop 기법을 사용하기 쉽게 도구화한 프로젝트들입니다. 
 
 최근에는 **Claude Code**나 **Cursor**와 결합하여 사용하는 방식이 가장 흔하며, 단순히 `while` 루프를 돌려 AI가 테스트를 통과할 때까지 코드를 수정하게 만드는 것이 핵심입니다.
 
-
+<br/>
